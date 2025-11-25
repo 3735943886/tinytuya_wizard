@@ -1,10 +1,10 @@
 [project]
-name = "tinytuya-wizard"
-version = "0.1.0"
+name = "tinytuya_wizard"
+version = "0.1.2"
 description = "Interactive wizard for tinytuya library"
 readme = "README.md"
 requires-python = ">=3.8"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "3735943886"}]
 dependencies = [
   "tinytuya",
@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/3735943886/tinytuya-wizard"
+Homepage = "https://github.com/3735943886/tinytuya_wizard"
 
 [project.scripts]
-tinytuya-wizard = "tinytuya-wizard.__main__:main"
+tinytuya_wizard = "tinytuya_wizard.__main__:main"

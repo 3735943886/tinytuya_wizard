@@ -66,7 +66,7 @@ class TuyaWizard:
 
   def wait_for_login_result(self, qr_token, retry_sec=5, timeout=120):
     start = time.time()
-    self.logger.info("Waiting for Tuya login confirmation (Scan QR on your phone)...")
+    self.logger.info("Waiting for Tuya login confirmation...")
     while time.time() - start <= timeout:
       ret, info = self.login.login_result(qr_token, self.client_id, self.info.get("user_code"))
       if ret:
@@ -144,13 +144,17 @@ class TuyaWizard:
     try:
       self.manager.update_device_cache()
     except Exception as e:
-      self.qr_login()
+      if not self.qr_login():
+        return False
       self.manager.update_device_cache()
     tuyadevices = [self.convert_to_dict_recursive(dev) for dev in self.manager.device_map.values()]
     self.postprocessing_device(tuyadevices)
     return tuyadevices
 
   def qr_login(self):
+    if self.info.get("user_code", "") == "":
+      self.logger.error("No User Code provided.")
+      return False
     self.logger.info("Starting QR login")
     qr_token, qr_url = self.get_qr_url()
     if self.qr_callback:
@@ -160,6 +164,7 @@ class TuyaWizard:
     self.wait_for_login_result(qr_token)
     self.init_manager()
     self._save_info()
+    self.qr_callback(None)
     return True
 
   def login_auto(self, user_code=None, creds=None, qr_callback=None):
@@ -176,7 +181,7 @@ class TuyaWizard:
         return True
       except Exception as e:
         self.logger.warning(f"Stored login info failed → fallback to QR: {e}")
-    self.qr_login()
+    return self.qr_login()
 
 def wizard(user_code, color, retries, forcescan, assume_yes, skip_poll, DEVICEFILE, SNAPSHOTFILE, CREDSFILE, creds=None, qr_callback=None):
   import qrcode
@@ -190,12 +195,15 @@ def wizard(user_code, color, retries, forcescan, assume_yes, skip_poll, DEVICEFI
   HAVE_COLOR = HAVE_COLORAMA or not sys.platform.startswith('win')
 
   def terminal_qr_handler(url):
-    print(normal + "\n=== QR Code Generated ===")
-    qr = qrcode.QRCode(border=1)
-    qr.add_data(url)
-    qr.make(fit=True)
-    qr.print_ascii(invert=True)
-    print(normal + "Scan this code with the " + bold + "SmartLife or TuyaSmart App" + normal + ". Waiting for scan...")
+    if url:
+      print(normal + "\n=== QR Code Generated ===")
+      qr = qrcode.QRCode(border=1)
+      qr.add_data(url)
+      qr.make(fit=True)
+      qr.print_ascii(invert=True)
+      print(normal + "Scan this code with the " + bold + "SmartLife or TuyaSmart App" + normal + ". Waiting for scan...")
+    else:
+      print(normal + "Scan done.")
 
   logger = logging.getLogger(__name__)
 
@@ -205,13 +213,11 @@ def wizard(user_code, color, retries, forcescan, assume_yes, skip_poll, DEVICEFI
   color = color and HAVE_COLOR
   (bold, subbold, normal, dim, alert, alertdim, cyan, red, yellow) = tinytuya.termcolor(color)
 
-  print(bold + "TinyTuya Setup Wizard2" + dim + " [%s]" % (tinytuya.version) + normal)
-  print("")
-
   if not user_code and not creds:
     user_code = input("Enter " + bold + "User Code" + normal + " from SmartLife or Tuya App (Leave blank to use Stored Code): ")
   tuya = TuyaWizard(logger=logger, info_file=CREDSFILE)
-  tuya.login_auto(user_code=user_code, creds=creds, qr_callback=qr_callback or terminal_qr_handler)
+  if not tuya.login_auto(user_code=user_code, creds=creds, qr_callback=qr_callback or terminal_qr_handler):
+    return
   tuyadevices = tuya.fetch_devices()
 
   if skip_poll:

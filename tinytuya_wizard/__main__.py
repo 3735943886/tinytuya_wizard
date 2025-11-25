@@ -1,5 +1,6 @@
 import argparse
-from wizard import wizard
+import logging
+from .wizard import wizard
 from tinytuya import SCANTIME, DEVICEFILE, SNAPSHOTFILE, CONFIGFILE, RAWFILE
 
 def main():
@@ -12,6 +13,8 @@ def main():
   parser.add_argument('-device-file', default=DEVICEFILE, metavar='FILE', help=f"JSON file to load/save devices [Default: {DEVICEFILE}]")
   parser.add_argument('-credentials-file', default=CONFIGFILE, metavar='FILE', help=f"JSON file to load/save cloud credentials [Default: {CONFIGFILE}]")
   args = parser.parse_args()
+
+  logging.basicConfig(level=logging.INFO)
 
   wizard(
     user_code=None,
