@@ -1,0 +1,19 @@
+[project]
+name = "tinytuya-wizard"
+version = "0.1.0"
+description = "Interactive wizard for tinytuya library"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [{name = "3735943886"}]
+dependencies = [
+  "tinytuya",
+  "qrcode",
+  "tuya-device-sharing-sdk"
+]
+
+[project.urls]
+Homepage = "https://github.com/3735943886/tinytuya-wizard"
+
+[project.scripts]
+tinytuya-wizard = "tinytuya-wizard.__main__:main"
